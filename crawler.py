@@ -21,6 +21,8 @@ import os
 import time
 import sys
 
+from threading import Thread
+
 from bs4 import BeautifulSoup
 
 base_url = 'http://cnes.datasus.gov.br/'
@@ -59,7 +61,7 @@ def get_entity_url(state_id, unity_code, city_code):
 
 
 def get_plain_html(url):
-    # print('Making a request: ', url)
+    # #print('Making a request: ', url)
     html = None 
 
     try:
@@ -172,12 +174,12 @@ def save_csv(json):
     writer = csv.writer(csvfile, delimiter=',')
 
     if (file_is_empty(file_name)):
-        # #print("\n\n")
-        ##print("Keys: ", json.keys())
+        # ##print("\n\n")
+        ###print("Keys: ", json.keys())
         writer.writerow(json.keys())
 
-    # #print("\n\n")
-    ##print("values: ", json.values())
+    # ##print("\n\n")
+    ###print("values: ", json.values())
     writer.writerow(json.values())
 
 
@@ -187,6 +189,7 @@ def file_is_empty(path):
 
 def show_progress_message(message):
     #sys.stdout.write(message)
+    os.system('clear')
     sys.stdout.write('\r%s' % message)
     sys.stdout.flush()
 
@@ -200,7 +203,7 @@ def merge_json(json1, json2):
 def get_cities_by_state(state):
     try:
         cities = get_cities(state['url'])
-        print('Cities: ', len(cities))        
+        #print('Cities: ', len(cities))        
     except Exception, e:
         pass
 
@@ -211,7 +214,7 @@ def get_entities_by_city(city):
     entities = None
     try:
         entities = get_entities(city['url'])
-        print('Entities: ', len(entities))            
+        #print('Entities: ', len(entities))            
     except Exception, e:
         pass
 
@@ -239,14 +242,14 @@ def download_sp():
         entities = get_entities_by_city(city)
     
         for entity_index, entity in enumerate(entities):
-            print 'baixando entidade... ', entity_index, ' de ', len(entities) 
-            merge_entity_with_cities(state, city, entity)
-            #print "Estados: ", state_index ," de ", len(states) , "\nCidades: " , city_index , " de " , len(cities) , "\n Entidades: " , entity_index , " de " , len(entities))
+            show_progress_message('baixando entidade... ' + str(entity_index) + ' de ' + str(len(entities)) + "\nCidades: " + str(city_index) + " de " + str(len(cities)) + "\n Entidades: " + str(entity_index) + " de " + str(len(entities)) )
+            th = Thread( target=merge_entity_with_cities, args = ( state, city, entity ) )
+            th.start()
+            #merge_entity_with_cities(state, city, entity)
 
-
-def initialize():
+def download_all_states():
     states = get_states()   
-    print('States: ', len(states))
+    #print('States: ', len(states))
 
     for state_index, state in enumerate(states):
         cities = get_cities_by_state(state)
@@ -255,9 +258,9 @@ def initialize():
             entities = get_entities_by_city(city)
 
             for entity_index, entity in enumerate(entities):
-                print 'baixando entidade... ', entity_index, ' de ', len(entities) 
+                show_progress_message('baixando entidade... ' + str(entity_index) + ' de ' + str(len(entities)) + "Estados: "+ str(state_index) + " de " + str(len(states)) + "\nCidades: " + str(city_index) + " de " + str(len(cities)) + "\n Entidades: " + str(entity_index) + " de " + str(len(entities)) )
                 merge_entity_with_cities(state, city, entity)
-                #print "Estados: ", state_index ," de ", len(states) , "\nCidades: " , city_index , " de " , len(cities) , "\n Entidades: " , entity_index , " de " , len(entities))
+                ##print "Estados: ", state_index ," de ", len(states) , "\nCidades: " , city_index , " de " , len(cities) , "\n Entidades: " , entity_index , " de " , len(entities))
 
                 
 
