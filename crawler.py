@@ -181,7 +181,7 @@ def save_csv(json):
     writer.writerow(json.values())
 
 
-def file_is_empty(path):
+def file_is_empty(path):    
     return os.stat(path).st_size == 0
 
 
@@ -197,37 +197,69 @@ def merge_json(json1, json2):
     return merged_json
 
 
+def get_cities_by_state(state):
+    try:
+        cities = get_cities(state['url'])
+        print('Cities: ', len(cities))        
+    except Exception, e:
+        pass
+
+    return cities
+
+
+def get_entities_by_city(city):
+    entities = None
+    try:
+        entities = get_entities(city['url'])
+        print('Entities: ', len(entities))            
+    except Exception, e:
+        pass
+
+    return entities
+
+def merge_entity_with_cities(state, city, entity):
+    try:
+        base_json = merge_json(state, city)
+
+        entity_json = parse_entity_data(entity)
+        json = merge_json(base_json, entity_json)
+
+        save_csv(json)
+
+    except Exception, e:
+        pass
+
+
+def download_sp():
+    states = get_states()   
+    state = states[24] #sp
+    cities = get_cities_by_state(state)
+
+    for city_index, city in enumerate(cities):
+        entities = get_entities_by_city(city)
+    
+        for entity_index, entity in enumerate(entities):
+            print 'baixando entidade... ', entity_index, ' de ', len(entities) 
+            merge_entity_with_cities(state, city, entity)
+            #print "Estados: ", state_index ," de ", len(states) , "\nCidades: " , city_index , " de " , len(cities) , "\n Entidades: " , entity_index , " de " , len(entities))
+
+
 def initialize():
-    states = get_states()
+    states = get_states()   
     print('States: ', len(states))
 
     for state_index, state in enumerate(states):
-        try:
-            cities = get_cities(state['url'])
-            print('Cities: ', len(cities))        
-        except Exception, e:
-            pass
+        cities = get_cities_by_state(state)
 
         for city_index, city in enumerate(cities):
-            try:
-                entities = get_entities(city['url'])
-                print('Entities: ', len(entities))            
-            except Exception, e:
-                pass
+            entities = get_entities_by_city(city)
 
             for entity_index, entity in enumerate(entities):
-                try:
-                    base_json = merge_json(state, city)
+                print 'baixando entidade... ', entity_index, ' de ', len(entities) 
+                merge_entity_with_cities(state, city, entity)
+                #print "Estados: ", state_index ," de ", len(states) , "\nCidades: " , city_index , " de " , len(cities) , "\n Entidades: " , entity_index , " de " , len(entities))
 
-                    entity_json = parse_entity_data(entity)
-                    json = merge_json(base_json, entity_json)
-
-                    save_csv(json)
-
-                    show_progress_message("Estados: " + state_index + " de " + len(states) + "\nCidades: " + city_index + " de " + len(cities) + "\n Entidades: " + entity_index + " de " + len(entities))
-
-                except Exception, e:
-                    pass
+                
 
 
-initialize();
+#initialize();
